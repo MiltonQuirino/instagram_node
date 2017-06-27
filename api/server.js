@@ -2,10 +2,13 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var mongodb = require('mongodb');
 var objectId = require('mongodb').ObjectId;
+var multiparty = require('connect-multiparty')
+var fs = require('fs');
 var app = express();
 
 app.use(bodyParser.urlencoded({ extend: true }));
 app.use(bodyParser.json());
+app.use(multiparty());
 
 var port = 8686;
 
@@ -25,23 +28,43 @@ app.get('/', function (req, res) {
 
 app.post('/api', function (req, res) {
 
-  var dados = req.body;
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
-  db.open(function (erro, mongoClient) {
-    mongoClient.collection('postagens', function (err, collection) {
-      collection.insert(dados, function (erro, records) {
-        console.log('open..');
-        if (erro) {
-          res.json(erro);
+  var path_origem = req.files.arquivo.path;
+  var path_destino = './uploads/' + req.files.arquivo.originalFilename;
+  var url_imagem = req.files.arquivo.originalFilename;
 
-        } else {
-          console.log(records);
-          res.json(records);
-        }
-        mongoClient.close();
+  fs.rename(path_origem, path_destino, function (err) {
+    if (err) {
+      res.json(err);
+      return;
+    }
+
+    var dados = {
+      url_imagem: url_imagem,
+      titulo: req.body.titulo
+    };
+
+    db.open(function (erro, mongoClient) {
+      mongoClient.collection('postagens', function (err, collection) {
+        collection.insert(dados, function (erro, records) {
+
+          if (erro) {
+            res.json(erro);
+
+          } else {
+            console.log(records);
+            res.json(records);
+          }
+          mongoClient.close();
+        });
       });
     });
+
   });
+
+
+
 
 });
 
@@ -72,7 +95,7 @@ app.get('/api/:id', function (req, res) {
         if (err) {
           res.json(err);
         } else {
-          res.json(results);
+          res.status(200).json(results);
         }
         mongoClient.close();
       });
@@ -107,13 +130,14 @@ app.delete('/api/:id', function (req, res) {
 
   db.open(function (erro, mongoClient) {
     mongoClient.collection('postagens', function (err, collection) {
-      collection.remove({_id:objectId(req.params.id)}, function(erro, records){
-          if(err){
-            res.json(erro);
-          }else{
-            res.json(records);
-          }
-          mongoClient.close();
+      collection.remove({ _id: objectId(req.params.id) }, function (erro, records) {
+        if (err) {
+
+          res.json(erro);
+        } else {
+          res.json(records);
+        }
+        mongoClient.close();
       });
 
     });
