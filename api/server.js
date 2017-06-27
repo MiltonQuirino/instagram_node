@@ -30,9 +30,14 @@ app.post('/api', function (req, res) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
 
+  var date = new Date();
+  time_stamp = date.getTime();
+
+  var url_imagem = time_stamp+'_'+ req.files.arquivo.originalFilename;
+
   var path_origem = req.files.arquivo.path;
-  var path_destino = './uploads/' + req.files.arquivo.originalFilename;
-  var url_imagem = req.files.arquivo.originalFilename;
+  var path_destino = './uploads/' + url_imagem;
+  
 
   fs.rename(path_origem, path_destino, function (err) {
     if (err) {
@@ -62,14 +67,12 @@ app.post('/api', function (req, res) {
     });
 
   });
-
-
-
-
 });
 
 app.get('/api', function (req, res) {
-
+  
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  
   db.open(function (erro, mongoClient) {
     mongoClient.collection('postagens', function (err, collection) {
       collection.find().toArray(function (err, results) {
@@ -102,6 +105,23 @@ app.get('/api/:id', function (req, res) {
     });
   });
 
+});
+
+app.get('/imagens/:imagem', function (req, res) {
+ console.log('imagesss');
+  var img = req.params.imagem;
+
+  fs.readFile('./uploads/'+img, function(err, conteudo){
+    if(err){
+      res.status(400).json(err);
+      return;
+    }
+    res.writeHead(200, {
+      'content-type':'image/jpg'
+    });
+    res.end(conteudo);
+
+  });
 });
 
 app.put('/api/:id', function (req, res) {
