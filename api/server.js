@@ -161,13 +161,37 @@ app.put('/api/:id', function (req, res) {
 
 });
 
-app.delete('/api/:id', function (req, res) {
+// app.delete('/api/:id', function (req, res) {
 
+//   db.open(function (erro, mongoClient) {
+//     mongoClient.collection('postagens', function (err, collection) {
+//       collection.remove({ _id: objectId(req.params.id) }, function (erro, records) {
+//         if (err) {
+
+//           res.json(erro);
+//         } else {
+//           res.json(records);
+//         }
+//         mongoClient.close();
+//       });
+
+//     });
+//   });
+// });
+
+app.delete('/api/:id', function (req, res) {
+  
   db.open(function (erro, mongoClient) {
     mongoClient.collection('postagens', function (err, collection) {
-      collection.remove({ _id: objectId(req.params.id) }, function (erro, records) {
+      collection.update(
+        {  },
+        { $pull :{
+            comentarios:{id_comentario : objectId(req.params.id)}
+          }
+        },
+        { multi : true } ,
+        function (erro, records) {
         if (err) {
-
           res.json(erro);
         } else {
           res.json(records);
@@ -177,4 +201,5 @@ app.delete('/api/:id', function (req, res) {
 
     });
   });
+
 });
